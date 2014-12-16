@@ -17,6 +17,10 @@
 #define YSIZE 500
 #include "algorithm.h"
 
+// HANDLE Mutex;
+HANDLE sem;
+FILE *fd;
+
 // Thread Rountine
 DWORD WINAPI run(LPVOID *data) {
     // cast void pointer to integer value
@@ -39,7 +43,7 @@ DWORD WINAPI run(LPVOID *data) {
             WaitForSingleObject(sem, INFINITE);
 
             fseek(fd, bytepos, SEEK_SET);
-            int len = fwrite(bgr,1,3,fd);
+            len = fwrite(bgr,1,3,fd);
             if (-1 == len || len != 3) {
                 printf("error while writing\n");
                 exit(1);
@@ -54,9 +58,6 @@ DWORD WINAPI run(LPVOID *data) {
     free(data);
 }
 
-// HANDLE Mutex;
-HANDLE sem;
-FILE *fd;
 
 /*struct individualThread{
     int* lines;
@@ -81,7 +82,7 @@ DWORD WINAPI calculateColors(LPVOID lpParam){
             
             while(bContinue){
                 dwWaitResult = WaitForSingleObject(
-                                                   Mutex,   			// handle to Mutex
+                                                   Mutex,               // handle to Mutex
                                                    INFINITE);           // zero-second time-out interval
                 
                 if(dwWaitResult == WAIT_OBJECT_0){
@@ -134,14 +135,14 @@ int main(int argc, char *argv[])
         perror("not enough arguments.");
         exit(1);
     }
-    
+
     /** Own declarations **/
 
     // number of Threads given by console input
     int numberOfThreads = atoi(argv[1]);
 
     // Array of all Handles, allocate memory for given number of handles
-    HANDLE* threadHandles[numberOfThreads]; // = (HANDLE*)malloc(numberOfThreads * sizeof(HANDLE));
+    HANDLE threadHandles[numberOfThreads]; // = (HANDLE*)malloc(numberOfThreads * sizeof(HANDLE));
 
     // Array of individualThread-Structs to pass data to each thread
     //struct individualThread* data = (struct individualThread*)malloc(numberOfThreads * sizeof(struct individualThread));
@@ -290,6 +291,7 @@ int main(int argc, char *argv[])
      }
      */
     int chunkCount = YSIZE / threadcount;
+    int i;
     for (i = 0; i < numberOfThreads; i++) {
         int from = i * chunkCount;
         int to  = (i+1) * chunkCount;
@@ -322,7 +324,7 @@ int main(int argc, char *argv[])
     // wait for all threads to finish calculation in order to start writing to file
     for (i = 0; i < numberOfThreads; i++) {
         DWORD wait_status = WaitForSingleObject(threadHandles[i], INFINITE);
-        if (wait_status === WAIT_FAILED) {
+        if (WAIT_FAILED == wait_status) {
             printf("wait error\n");
             exit(1);
         }
